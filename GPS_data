@@ -1,0 +1,64 @@
+#include <TinyGPS++.h>
+#include <SoftwareSerial.h>
+
+SoftwareSerial GPS_SoftSerial(13, 15); // D8,D7
+TinyGPSPlus gps;
+
+void setup() {
+  Serial.begin(9600);
+  GPS_SoftSerial.begin(9600);
+}
+
+void loop() {
+  smartDelay(1000);
+  
+  double lat_val = gps.location.lat();
+  double lng_val = gps.location.lng();
+  double alt_m_val = gps.altitude.meters();
+  uint8_t hr_val = gps.time.hour();
+  uint8_t min_val = gps.time.minute();
+  uint8_t sec_val = gps.time.second();
+
+  printLocation(lat_val, lng_val);
+  printAltitude(alt_m_val);
+  printTime(hr_val, min_val, sec_val);
+}
+
+void printLocation(double lat, double lng) {
+  if (gps.location.isValid()) {
+    Serial.print("Latitude: ");
+    Serial.println(lat, 6);
+    Serial.print("Longitude: ");
+    Serial.println(lng, 6);
+
+    String mapUrl = "https://maps.google.com/?q=" + String(lat, 6) + "," + String(lng, 6);
+    Serial.println("Google Maps URL: " + mapUrl);
+  } else {
+    Serial.println("Invalid Location");
+  }
+}
+
+void printAltitude(double altitude) {
+  if (gps.altitude.isValid()) {
+    Serial.print("Altitude: ");
+    Serial.println(altitude, 6);
+  } else {
+    Serial.println("Invalid Altitude");
+  }
+}
+
+void printTime(uint8_t hour, uint8_t minute, uint8_t second) {
+  if (gps.time.isValid()) {
+    Serial.printf("Time: %02d:%02d:%02d\n", hour, minute, second);
+  } else {
+    Serial.println("Invalid Time");
+  }
+}
+
+void smartDelay(unsigned long ms) {
+  unsigned long start = millis();
+  do {
+    while (GPS_SoftSerial.available())
+      gps.encode(GPS_SoftSerial.read());
+  } while (millis() - start < ms);
+}
